@@ -35,8 +35,17 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
 
 /**Errors */
 error Raffle__SendMoreETHtoEnter();
+error Raffle__TransferFailed();
+error Raffle__RaffleisNotOpened();
 
 contract Raffle is VRFConsumerBaseV2Plus {
+    /*Type Declarations */
+    enum RaffleState {
+        OPEN,
+        CALCULATING
+    }
+
+    /* state variables*/
     uint16 private constant REQUEST_CONFIRMATION = 3;
     uint32 private constant NUM_WORDS = 1;
     uint256 private immutable i_enteranceFee;
@@ -46,7 +55,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
     address payable[] private s_player;
     uint256 private s_startedTime;
     uint256 private s_subscriptionId;
-
+    address private s_recentWinner;
+    RaffleState private s_raffleState;
     /**Events */
     event RaffleEntered(address indexed player);
 
@@ -64,6 +74,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         i_gasLane = _gasLane;
         s_subscriptionId = _subscriptionId;
         i_gasLimit = _gasLimit;
+        s_raffleState = RaffleState.OPEN;
     }
 
     function enterRaffle() external payable {
@@ -71,6 +82,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
         // require(msg.value > i_enteranceFee, Raffle__SendMoreETHtoEnter());
         if (msg.value < i_enteranceFee) {
             revert Raffle__SendMoreETHtoEnter();
+        }
+        if (s_raffleState != RaffleState.OPEN) {
+            revert Raffle__RaffleisNotOpened();
         }
         s_player.push(payable(msg.sender));
         emit RaffleEntered(msg.sender);
@@ -80,6 +94,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         if ((block.timestamp - s_startedTime) < i_interval) {
             revert();
         }
+        s_raffleState = RaffleState.CALCULATING;
         VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient
             .RandomWordsRequest({
                 keyHash: i_gasLane,
@@ -99,7 +114,18 @@ contract Raffle is VRFConsumerBaseV2Plus {
     function fulfillRandomWords(
         uint256 requestId,
         uint256[] calldata randomWords
-    ) internal virtual override {}
+    ) internal override {
+        uint256 winnerIndex = randomWords[0] % s_player.length;
+        address payable pickedWinner = s_player[winnerIndex];
+        s_recentWinner = pickedWinner;
+        (bool callSuccess, ) = s_recentWinner.call{
+            value: address(this).balance
+        }("");
+        if (!callSuccess) {
+            revert Raffle__TransferFailed();
+        }
+        s_raffleState = RaffleState.OPEN;
+    }
 
     /**
      * getter functions
