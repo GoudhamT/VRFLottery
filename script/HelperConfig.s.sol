@@ -3,8 +3,14 @@
 pragma solidity 0.8.19;
 
 import {Script} from "forge-std/Script.sol";
+import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
 abstract contract CodeConstants {
+    /*MOCK constants*/
+    uint96 public constant MOCK_BASE_FEE = 0.02 ether;
+    uint96 public constant MOCK_GAS_PRICE = 1e18;
+    int256 public constant MOCK_WEI_PER_LINK = 4e15;
+
     uint256 public constant SEPLOIA_CHAIN_ID = 11155111;
     uint256 public constant LOCAL_CHAIN_ID = 31337;
     uint256 public constant ETH_MAINNET = 1;
@@ -23,19 +29,21 @@ contract HelperConfig is Script, CodeConstants {
 
     NetworkConfig public localNetworkConfig;
 
-    function getConfig() public view returns (NetworkConfig memory) {
+    function getConfig() public returns (NetworkConfig memory) {
         return getConfigByChainId(block.chainid);
     }
 
     function getConfigByChainId(
         uint256 _chainID
-    ) public view returns (NetworkConfig memory) {
+    ) public returns (NetworkConfig memory) {
         if (_chainID == SEPLOIA_CHAIN_ID) {
             return getSepoliaConfig();
         } else if (_chainID == ETH_MAINNET) {
             return getEthMainnetConfig();
         } else if (_chainID == LOCAL_CHAIN_ID) {
-            if (localNetworkConfig.vrfCoordinator == address(0)) {}
+            if (localNetworkConfig.vrfCoordinator == address(0)) {
+                return getorCreateAnvilconfig();
+            }
             return localNetworkConfig;
         } else {
             revert Raffle_HelperConfig__InvalidChainID(_chainID);
@@ -64,5 +72,25 @@ contract HelperConfig is Script, CodeConstants {
                 subscriptionId: 0,
                 gasLimit: 150000
             });
+    }
+
+    function getorCreateAnvilconfig() public returns (NetworkConfig memory) {
+        vm.startBroadcast();
+        VRFCoordinatorV2_5Mock vrfCoordinatorMock = new VRFCoordinatorV2_5Mock(
+            MOCK_BASE_FEE,
+            MOCK_GAS_PRICE,
+            MOCK_WEI_PER_LINK
+        );
+        vm.stopBroadcast();
+        localNetworkConfig = NetworkConfig({
+            enterranceFee: 0.01 ether, //10000000000000000,
+            interval: 30, //30 seconds
+            vrfCoordinator: address(vrfCoordinatorMock),
+            //doesn't matter
+            gasLane: 0x3fd2fec10d06ee8f65e7f2e95f5c56511359ece3f33960ad8a866ae24a8ff10b,
+            subscriptionId: 0,
+            gasLimit: 150000
+        });
+        return localNetworkConfig;
     }
 }
