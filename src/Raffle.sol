@@ -33,17 +33,17 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
  * @dev This implements the Chainlink VRF Version 2
  */
 
-/**Errors */
-error Raffle__SendMoreETHtoEnter();
-error Raffle__TransferFailed();
-error Raffle__RaffleisNotOpened();
-error Raffle__UpKeepFailed(
-    uint256 balance,
-    uint256 playerLength,
-    uint256 raffleState
-);
-
 contract Raffle is VRFConsumerBaseV2Plus {
+    /**Errors */
+    error Raffle__SendMoreETHtoEnter();
+    error Raffle__TransferFailed();
+    error Raffle__RaffleisNotOpened();
+    error Raffle__UpKeepFailed(
+        uint256 balance,
+        uint256 playerLength,
+        uint256 raffleState
+    );
+
     /*Type Declarations */
     enum RaffleState {
         OPEN,
@@ -183,7 +183,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
         return s_player[_index];
     }
 
-    function getRaffleState() public view returns (RaffleState) {
+    function getPlayerCount() external view returns (uint256) {
+        return s_player.length;
+    }
+
+    function getRaffleState() external view returns (RaffleState) {
         return s_raffleState;
     }
 }

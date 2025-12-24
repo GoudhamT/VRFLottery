@@ -9,12 +9,16 @@ import {HelperConfig} from "script/HelperConfig.s.sol";
 contract RaffleTest is Test {
     Raffle public raffle;
     HelperConfig public helperConfig;
+    uint256 public entranceFee;
     address PLAYER = makeAddr("player");
     uint256 public constant STARTING_PLAYER_BALANCE = 10 ether;
 
     function setUp() external {
         DeployScript deployer = new DeployScript();
         (raffle, helperConfig) = deployer.deployContract();
+        HelperConfig.NetworkConfig memory config = helperConfig.getConfig();
+        entranceFee = config.entranceFee;
+        vm.deal(PLAYER, STARTING_PLAYER_BALANCE);
     }
 
     function testCheckInitializedRaffleStateIsOpen() public view {
@@ -23,5 +27,24 @@ contract RaffleTest is Test {
 
     function testCheckRaffleStateUint() public view {
         assert(uint256(raffle.getRaffleState()) == 0);
+    }
+
+    function testRevertWhileEnterRaffleWithoutMoney() public {
+        //arrange
+        vm.prank(PLAYER);
+        //Act & // assert
+        vm.expectRevert(Raffle.Raffle__SendMoreETHtoEnter.selector);
+        raffle.enterRaffle();
+    }
+
+    function testRaffleCheckPlayerAddress() public {
+        //Arrange
+        vm.prank(PLAYER);
+        //Act
+        raffle.enterRaffle{value: entranceFee}();
+        address enteredAddress = raffle.getPlayerByIndex(0);
+        //Assert
+        assert(enteredAddress == PLAYER);
+        assert(raffle.getPlayerCount() == 1);
     }
 }

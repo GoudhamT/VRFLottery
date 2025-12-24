@@ -5,3 +5,5 @@ build:
 	forge build
 compile:
 	forge compile
+test:
+	forge test
