@@ -11,6 +11,7 @@ abstract contract CodeConstants {
 }
 
 contract HelperConfig is Script, CodeConstants {
+    error Raffle_HelperConfig__InvalidChainID(uint256 id);
     struct NetworkConfig {
         uint256 enterranceFee;
         uint256 interval;
@@ -22,13 +23,22 @@ contract HelperConfig is Script, CodeConstants {
 
     NetworkConfig public localNetworkConfig;
 
-    function getConfig() public returns (NetworkConfig memory) {
-        if (block.chainid == SEPLOIA_CHAIN_ID) {
-            localNetworkConfig = getSepoliaConfig();
+    function getConfig() public view returns (NetworkConfig memory) {
+        return getConfigByChainId(block.chainid);
+    }
+
+    function getConfigByChainId(
+        uint256 _chainID
+    ) public view returns (NetworkConfig memory) {
+        if (_chainID == SEPLOIA_CHAIN_ID) {
+            return getSepoliaConfig();
+        } else if (_chainID == ETH_MAINNET) {
+            return getEthMainnetConfig();
+        } else if (_chainID == LOCAL_CHAIN_ID) {
+            if (localNetworkConfig.vrfCoordinator == address(0)) {}
             return localNetworkConfig;
-        } else if (block.chainid == ETH_MAINNET) {
-            localNetworkConfig = getEthMainnetConfig();
-            return localNetworkConfig;
+        } else {
+            revert Raffle_HelperConfig__InvalidChainID(_chainID);
         }
     }
 
