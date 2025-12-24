@@ -10,6 +10,7 @@ contract RaffleTest is Test {
     Raffle public raffle;
     HelperConfig public helperConfig;
     uint256 public entranceFee;
+    uint256 public interval;
     address PLAYER = makeAddr("player");
     uint256 public constant STARTING_PLAYER_BALANCE = 10 ether;
 
@@ -22,6 +23,7 @@ contract RaffleTest is Test {
         (raffle, helperConfig) = deployer.deployContract();
         HelperConfig.NetworkConfig memory config = helperConfig.getConfig();
         entranceFee = config.entranceFee;
+        interval = config.interval;
         vm.deal(PLAYER, STARTING_PLAYER_BALANCE);
     }
 
@@ -60,6 +62,19 @@ contract RaffleTest is Test {
         vm.expectEmit(true, false, false, false, address(raffle));
         emit RaffleEntered(PLAYER);
         //assert
+        raffle.enterRaffle{value: entranceFee}();
+    }
+
+    function testRaffleErrorWhileCalculating() public {
+        //Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        raffle.performUpkeep("");
+        //Act / Assert
+        vm.prank(PLAYER);
+        vm.expectRevert(Raffle.Raffle__RaffleisNotOpened.selector);
         raffle.enterRaffle{value: entranceFee}();
     }
 }
