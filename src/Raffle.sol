@@ -92,10 +92,35 @@ contract Raffle is VRFConsumerBaseV2Plus {
         emit RaffleEntered(msg.sender);
     }
 
-    function pickWinner() external {
-        if ((block.timestamp - s_startedTime) < i_interval) {
+    /**
+     * @dev - This checkUpKeep function is to validate can contract pick winner?
+     * based on below conditions
+     * 1.has interval passed?
+     * 2.is contract has any balance?
+     * 3.is Raffle state is Open?
+     * 4.has any player entered raffle?
+     * if all condition is passed then winner can be picked
+     * @param - ignored
+     * @return upkeepNeeded
+     * @return
+     */
+    function checkUpkeep(
+        bytes memory /* checkData */
+    ) public view returns (bool upkeepNeeded, bytes memory /* performData */) {
+        bool hasPassed = ((block.timestamp - s_startedTime) > i_interval);
+        bool isOpen = s_raffleState == RaffleState.OPEN;
+        bool hasBalance = address(this).balance > 0;
+        bool hasPlayers = s_player.length > 0;
+        upkeepNeeded = hasPassed && isOpen && hasBalance && hasPlayers;
+        return (upkeepNeeded, "");
+    }
+
+    function performUpkeep(bytes calldata /* performData */) external {
+        (bool isRaffleValidtoPick, ) = checkUpkeep("");
+        if (!isRaffleValidtoPick) {
             revert();
         }
+
         s_raffleState = RaffleState.CALCULATING;
         VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient
             .RandomWordsRequest({
