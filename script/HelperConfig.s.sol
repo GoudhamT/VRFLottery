@@ -19,7 +19,7 @@ abstract contract CodeConstants {
 contract HelperConfig is Script, CodeConstants {
     error Raffle_HelperConfig__InvalidChainID(uint256 id);
     struct NetworkConfig {
-        uint256 enterranceFee;
+        uint256 entranceFee;
         uint256 interval;
         address vrfCoordinator;
         bytes32 gasLane;
@@ -53,7 +53,7 @@ contract HelperConfig is Script, CodeConstants {
     function getSepoliaConfig() public pure returns (NetworkConfig memory) {
         return
             NetworkConfig({
-                enterranceFee: 0.01 ether, //10000000000000000,
+                entranceFee: 0.01 ether, //10000000000000000,
                 interval: 30, //30 seconds
                 vrfCoordinator: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
                 gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
@@ -65,7 +65,7 @@ contract HelperConfig is Script, CodeConstants {
     function getEthMainnetConfig() public pure returns (NetworkConfig memory) {
         return
             NetworkConfig({
-                enterranceFee: 0.01 ether, //10000000000000000,
+                entranceFee: 0.01 ether, //10000000000000000,
                 interval: 30, //30 seconds
                 vrfCoordinator: 0xD7f86b4b8Cae7D942340FF628F82735b7a20893a,
                 gasLane: 0x3fd2fec10d06ee8f65e7f2e95f5c56511359ece3f33960ad8a866ae24a8ff10b,
@@ -83,7 +83,7 @@ contract HelperConfig is Script, CodeConstants {
         );
         vm.stopBroadcast();
         localNetworkConfig = NetworkConfig({
-            enterranceFee: 0.01 ether, //10000000000000000,
+            entranceFee: 0.01 ether, //10000000000000000,
             interval: 30, //30 seconds
             vrfCoordinator: address(vrfCoordinatorMock),
             //doesn't matter
