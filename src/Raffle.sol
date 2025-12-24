@@ -37,6 +37,11 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
 error Raffle__SendMoreETHtoEnter();
 error Raffle__TransferFailed();
 error Raffle__RaffleisNotOpened();
+error Raffle__UpKeepFailed(
+    uint256 balance,
+    uint256 playerLength,
+    uint256 raffleState
+);
 
 contract Raffle is VRFConsumerBaseV2Plus {
     /*Type Declarations */
@@ -118,7 +123,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
     function performUpkeep(bytes calldata /* performData */) external {
         (bool isRaffleValidtoPick, ) = checkUpkeep("");
         if (!isRaffleValidtoPick) {
-            revert();
+            revert Raffle__UpKeepFailed(
+                address(this).balance,
+                s_player.length,
+                uint256(s_raffleState)
+            );
         }
 
         s_raffleState = RaffleState.CALCULATING;
