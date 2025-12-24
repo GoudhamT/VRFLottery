@@ -13,6 +13,10 @@ contract RaffleTest is Test {
     address PLAYER = makeAddr("player");
     uint256 public constant STARTING_PLAYER_BALANCE = 10 ether;
 
+    /**Events */
+    event RaffleEntered(address indexed player);
+    event PickedWinner(address indexed winner);
+
     function setUp() external {
         DeployScript deployer = new DeployScript();
         (raffle, helperConfig) = deployer.deployContract();
@@ -46,5 +50,16 @@ contract RaffleTest is Test {
         //Assert
         assert(enteredAddress == PLAYER);
         assert(raffle.getPlayerCount() == 1);
+    }
+
+    function testRaffleEnteredEvent() public {
+        //arrange
+        vm.prank(PLAYER);
+        console.log(PLAYER);
+        //Act
+        vm.expectEmit(true, false, false, false, address(raffle));
+        emit RaffleEntered(PLAYER);
+        //assert
+        raffle.enterRaffle{value: entranceFee}();
     }
 }
