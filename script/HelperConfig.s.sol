@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 
 import {Script} from "forge-std/Script.sol";
 import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
+import {LinkToken} from "test/mocks/LinkToken.sol";
 
 abstract contract CodeConstants {
     /*MOCK constants*/
@@ -11,7 +12,7 @@ abstract contract CodeConstants {
     uint96 public constant MOCK_GAS_PRICE = 1e18;
     int256 public constant MOCK_WEI_PER_LINK = 4e15;
 
-    uint256 public constant SEPLOIA_CHAIN_ID = 11155111;
+    uint256 public constant SEPOLIA_CHAIN_ID = 11155111;
     uint256 public constant LOCAL_CHAIN_ID = 31337;
     uint256 public constant ETH_MAINNET = 1;
 }
@@ -25,6 +26,7 @@ contract HelperConfig is Script, CodeConstants {
         bytes32 gasLane;
         uint256 subscriptionId;
         uint32 gasLimit;
+        address link;
     }
 
     NetworkConfig public localNetworkConfig;
@@ -36,7 +38,7 @@ contract HelperConfig is Script, CodeConstants {
     function getConfigByChainId(
         uint256 _chainID
     ) public returns (NetworkConfig memory) {
-        if (_chainID == SEPLOIA_CHAIN_ID) {
+        if (_chainID == SEPOLIA_CHAIN_ID) {
             return getSepoliaConfig();
         } else if (_chainID == ETH_MAINNET) {
             return getEthMainnetConfig();
@@ -57,8 +59,9 @@ contract HelperConfig is Script, CodeConstants {
                 interval: 30, //30 seconds
                 vrfCoordinator: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B,
                 gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
-                subscriptionId: 0,
-                gasLimit: 150000
+                subscriptionId: 15128166972103155481899904279290870035163628868134405121389517347304582586668,
+                gasLimit: 150000,
+                link: 0x779877A7B0D9E8603169DdbD7836e478b4624789
             });
     }
 
@@ -70,7 +73,8 @@ contract HelperConfig is Script, CodeConstants {
                 vrfCoordinator: 0xD7f86b4b8Cae7D942340FF628F82735b7a20893a,
                 gasLane: 0x3fd2fec10d06ee8f65e7f2e95f5c56511359ece3f33960ad8a866ae24a8ff10b,
                 subscriptionId: 0,
-                gasLimit: 150000
+                gasLimit: 150000,
+                link: 0x514910771AF9Ca656af840dff83E8264EcF986CA
             });
     }
 
@@ -81,6 +85,7 @@ contract HelperConfig is Script, CodeConstants {
             MOCK_GAS_PRICE,
             MOCK_WEI_PER_LINK
         );
+        LinkToken linkToken = new LinkToken();
         vm.stopBroadcast();
         localNetworkConfig = NetworkConfig({
             entranceFee: 0.01 ether, //10000000000000000,
@@ -89,7 +94,8 @@ contract HelperConfig is Script, CodeConstants {
             //doesn't matter
             gasLane: 0x3fd2fec10d06ee8f65e7f2e95f5c56511359ece3f33960ad8a866ae24a8ff10b,
             subscriptionId: 0,
-            gasLimit: 150000
+            gasLimit: 150000,
+            link: address(linkToken)
         });
         return localNetworkConfig;
     }

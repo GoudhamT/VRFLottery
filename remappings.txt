@@ -1,1 +1,2 @@
 @chainlink/=lib/chainlink-brownie-contracts/
+@solmate=lib/solmate/src/
