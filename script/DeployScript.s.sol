@@ -5,10 +5,12 @@ pragma solidity 0.8.19;
 import {Script} from "forge-std/Script.sol";
 import {Raffle} from "src/Raffle.sol";
 import {HelperConfig} from "script/HelperConfig.s.sol";
-import {CreateSubscription} from "script/Interactions.s.sol";
+import {CreateSubscription, FundSubscription, AddConsumer} from "script/Interactions.s.sol";
 
 contract DeployScript is Script {
-    function run() external {}
+    function run() external {
+        deployContract();
+    }
 
     function deployContract() public returns (Raffle, HelperConfig) {
         HelperConfig helperConfig = new HelperConfig();
@@ -18,6 +20,13 @@ contract DeployScript is Script {
             CreateSubscription createSubscription = new CreateSubscription();
             (config.subscriptionId, ) = createSubscription
                 .getOrCreateSubscription(config.vrfCoordinator);
+            //Fund Subscription
+            FundSubscription funding = new FundSubscription();
+            funding.fundSubscription(
+                config.vrfCoordinator,
+                config.subscriptionId,
+                config.link
+            );
         }
         vm.startBroadcast();
         Raffle raffle = new Raffle(
@@ -29,6 +38,13 @@ contract DeployScript is Script {
             config.gasLimit
         );
         vm.stopBroadcast();
+        //Add consumer
+        AddConsumer contractConsumer = new AddConsumer();
+        contractConsumer.addConsumer(
+            address(raffle),
+            config.vrfCoordinator,
+            config.subscriptionId
+        );
         return (raffle, helperConfig);
     }
 }

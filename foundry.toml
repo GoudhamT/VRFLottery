@@ -1,4 +1,8 @@
 [profile.default]
+fs_permissions = [
+  {access = "read", path = "./broadcast"},
+  {access = "read", path = "./reports"},
+]
 libs = ["lib"]
 out = "out"
 remappings = [
