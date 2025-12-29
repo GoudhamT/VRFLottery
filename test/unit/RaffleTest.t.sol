@@ -35,6 +35,10 @@ contract RaffleTest is Test {
         assert(uint256(raffle.getRaffleState()) == 0);
     }
 
+    /*//////////////////////////////////////////////////////////////
+                              ENTER RAFFLE
+    //////////////////////////////////////////////////////////////*/
+
     function testRevertWhileEnterRaffleWithoutMoney() public {
         //arrange
         vm.prank(PLAYER);
@@ -76,5 +80,33 @@ contract RaffleTest is Test {
         vm.prank(PLAYER);
         vm.expectRevert(Raffle.Raffle__RaffleisNotOpened.selector);
         raffle.enterRaffle{value: entranceFee}();
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                              CHECK UPKEEP
+    //////////////////////////////////////////////////////////////*/
+
+    function testCheckUpKeepNeededFalseForZEROBalance() public {
+        //Arrange
+        vm.prank(PLAYER);
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        //Act
+        (bool upKeepNeeded, ) = raffle.checkUpkeep("");
+        //Assert
+        assert(!upKeepNeeded);
+    }
+
+    function testCheckUpKeepNeededFailesOPENState() public {
+        //Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        raffle.performUpkeep("");
+        //Act
+        (bool upKeepNeeded, ) = raffle.checkUpkeep("");
+        //Assert
+        assert(!upKeepNeeded);
     }
 }

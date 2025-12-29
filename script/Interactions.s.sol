@@ -5,8 +5,10 @@ import {Script, console} from "forge-std/Script.sol";
 import {HelperConfig, CodeConstants} from "script/HelperConfig.s.sol";
 import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 import {LinkToken} from "test/mocks/LinkToken.sol";
-import {VRFCoordinatorV2Interface} from "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+// import {VRFCoordinatorV2Interface} from "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import {DevOpsTools} from "lib/foundry-devops/src/DevOpsTools.sol";
+
+// import {VRFCoordinatorV2_5} from "@chainlink/contracts/src/v0.8/dev/vrf/VRFCoordinatorV2_5.sol";
 
 contract CreateSubscription is Script, CodeConstants {
     event subscriptionIsCreated(uint256 indexed subID);
@@ -28,17 +30,17 @@ contract CreateSubscription is Script, CodeConstants {
         uint256 subId;
         console.log("VRF Coordinator is ", _vrfCoordinator);
         console.log("used on chain is ", block.chainid);
-        if (block.chainid == LOCAL_CHAIN_ID) {
-            vm.startBroadcast();
-            subId = VRFCoordinatorV2_5Mock(_vrfCoordinator).createSubscription();
-            vm.stopBroadcast();
-        } else {
-            vm.startBroadcast();
-            subId = VRFCoordinatorV2Interface(_vrfCoordinator)
-                .createSubscription();
-            vm.stopBroadcast();
-            console.log("created subscription ID is ", subId);
-        }
+        // if (block.chainid == LOCAL_CHAIN_ID) {
+        vm.startBroadcast();
+        subId = VRFCoordinatorV2_5Mock(_vrfCoordinator).createSubscription();
+        vm.stopBroadcast();
+        // } else {
+        //     vm.startBroadcast();
+        //     subId = VRFCoordinatorV2Interface(_vrfCoordinator)
+        //         .createSubscription();
+        //     vm.stopBroadcast();
+        //     console.log("created subscription ID is ", subId);
+        // }
         emit subscriptionIsCreated(subId);
         return (subId, _vrfCoordinator);
     }
@@ -116,3 +118,20 @@ contract AddConsumer is Script {
         vm.stopBroadcast();
     }
 }
+
+// ////this is testing to add subscription
+// contract CreateSubscriptionDirectly is Script {
+//     event DirectSubscription(uint256 indexed ID);
+//     address public vrfCoords = 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B;
+
+//     function run() public {
+//         console.log("sender is ", msg.sender);
+//         vm.startBroadcast();
+//         uint256 subID = VRFCoordinatorV2_5(vrfCoords).createSubscription();
+//         // uint64 subID = VRFCoordinatorV2Interface(vrfCoords)
+//         //     .createSubscription();
+//         // vm.stopBroadcast();
+//         emit DirectSubscription(subID);
+//         console.log("subscription ID is ", subID);
+//     }
+// }
