@@ -109,4 +109,25 @@ contract RaffleTest is Test {
         //Assert
         assert(!upKeepNeeded);
     }
+
+    function testUpKeepNeededHasntPassed() public {
+        //Arrange
+        vm.prank(PLAYER);
+        //Act
+        (bool checkUpKeep, ) = raffle.checkUpkeep("");
+        //Assert
+        assert(!checkUpKeep);
+    }
+
+    function testCheckUpKeepNeededIsPassed() public {
+        //Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        //Act
+        (bool checkUpKeepNeeded, ) = raffle.checkUpkeep("");
+        //Assert
+        assert(checkUpKeepNeeded);
+    }
 }
