@@ -5,6 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {Raffle} from "../../src/Raffle.sol";
 import {DeployScript} from "script/DeployScript.s.sol";
 import {HelperConfig} from "script/HelperConfig.s.sol";
+import {Vm} from "forge-std/Vm.sol";
 
 contract RaffleTest is Test {
     Raffle public raffle;
@@ -17,6 +18,7 @@ contract RaffleTest is Test {
     /**Events */
     event RaffleEntered(address indexed player);
     event PickedWinner(address indexed winner);
+    event RandomNumberGenerated(uint256 indexed requestId);
 
     function setUp() external {
         DeployScript deployer = new DeployScript();
@@ -129,5 +131,65 @@ contract RaffleTest is Test {
         (bool checkUpKeepNeeded, ) = raffle.checkUpkeep("");
         //Assert
         assert(checkUpKeepNeeded);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                              PERFORM UPKEEP
+    //////////////////////////////////////////////////////////////*/
+    function testPerformUpKeepIsGood() public {
+        //Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        //Act / Assert
+        raffle.performUpkeep("");
+    }
+
+    function testPerformUpKeepFailedWhenCheckUpkeepFails() public {
+        //Arrange
+        uint256 balance = 0;
+        uint256 playerLength = 0;
+        Raffle.RaffleState rState = raffle.getRaffleState();
+        //Act
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Raffle.Raffle__UpKeepFailed.selector,
+                balance,
+                playerLength,
+                rState
+            )
+        );
+        raffle.performUpkeep("");
+    }
+
+    function testPerformUpKeepStateAndEmitRequestID() public {
+        //Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        // raffle.performUpkeep("");
+        //Act
+        vm.recordLogs();
+        raffle.performUpkeep("");
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        // console.log("Total logs:", entries.length);
+
+        // for (uint256 i = 0; i < entries.length; i++) {
+        //     console.log("---- Log index ----", i);
+        //     console.log("Emitter:", entries[i].emitter);
+        //     console.log("Topics length:", entries[i].topics.length);
+
+        //     for (uint256 j = 0; j < entries[i].topics.length; j++) {
+        //         console.logBytes32(entries[i].topics[j]);
+        //     }
+
+        //     console.logBytes(entries[i].data);
+        // }
+        bytes32 requestId = entries[1].topics[1];
+        //Assert
+        assert(requestId > 0);
+        assert(uint256(raffle.getRaffleState()) == 1);
     }
 }
