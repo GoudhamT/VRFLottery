@@ -8,6 +8,8 @@ import {HelperConfig} from "script/HelperConfig.s.sol";
 import {CreateSubscription, FundSubscription, AddConsumer} from "script/Interactions.s.sol";
 
 contract DeployScript is Script {
+    address public userAccount;
+
     function run() external {
         deployContract();
     }
@@ -15,20 +17,25 @@ contract DeployScript is Script {
     function deployContract() public returns (Raffle, HelperConfig) {
         HelperConfig helperConfig = new HelperConfig();
         HelperConfig.NetworkConfig memory config = helperConfig.getConfig();
+        // userAccount = config.userAccount;
         if (config.subscriptionId == 0) {
             //create subscription
             CreateSubscription createSubscription = new CreateSubscription();
             (config.subscriptionId, ) = createSubscription
-                .getOrCreateSubscription(config.vrfCoordinator);
+                .getOrCreateSubscription(
+                    config.vrfCoordinator,
+                    config.userAccount
+                );
             //Fund Subscription
             FundSubscription funding = new FundSubscription();
             funding.fundSubscription(
                 config.vrfCoordinator,
                 config.subscriptionId,
-                config.link
+                config.link,
+                config.userAccount
             );
         }
-        vm.startBroadcast();
+        vm.startBroadcast(config.userAccount);
         Raffle raffle = new Raffle(
             config.entranceFee,
             config.interval,
@@ -43,7 +50,8 @@ contract DeployScript is Script {
         contractConsumer.addConsumer(
             address(raffle),
             config.vrfCoordinator,
-            config.subscriptionId
+            config.subscriptionId,
+            config.userAccount
         );
         return (raffle, helperConfig);
     }

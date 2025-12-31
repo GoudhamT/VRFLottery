@@ -4,11 +4,11 @@ pragma solidity 0.8.19;
 import {Test, console} from "forge-std/Test.sol";
 import {Raffle} from "../../src/Raffle.sol";
 import {DeployScript} from "script/DeployScript.s.sol";
-import {HelperConfig} from "script/HelperConfig.s.sol";
+import {HelperConfig, CodeConstants} from "script/HelperConfig.s.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
-contract RaffleTest is Test {
+contract RaffleTest is Test, CodeConstants {
     Raffle public raffle;
     HelperConfig public helperConfig;
     uint256 public entranceFee;
@@ -194,9 +194,16 @@ contract RaffleTest is Test {
     /*//////////////////////////////////////////////////////////////
                               Fullfill Random Words
     //////////////////////////////////////////////////////////////*/
+    modifier skipFullfill() {
+        if (block.chainid != LOCAL_CHAIN_ID) {
+            return;
+        }
+        _;
+    }
+
     function testCallFullFillRandomWordsOnlyAfterPerformUpKeepPasses(
         uint256 _requestId
-    ) public {
+    ) public skipFullfill {
         vm.prank(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
         vm.warp(block.timestamp + interval + 1);
@@ -211,6 +218,7 @@ contract RaffleTest is Test {
     function testFullfillRandomWordsPickWinnerAndValidate()
         public
         raffleEntered
+        skipFullfill
     {
         //Arrange
         uint256 morePlayers = 3;
