@@ -111,3 +111,7 @@ cd raffle-contract
 forge install
 forge build
 forge test
+
+## 🏗 Deployment
+
+- **Deployed Address (Sepolia Testnet):** [`0x043D4Fc789de77260E788b209436f28619a47e15`](https://sepolia.etherscan.io/address/0x043D4Fc789de77260E788b209436f28619a47e15)  
