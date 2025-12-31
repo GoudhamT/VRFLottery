@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import {Script} from "forge-std/Script.sol";
+import {Script, console} from "forge-std/Script.sol";
 import {Raffle} from "src/Raffle.sol";
 import {HelperConfig} from "script/HelperConfig.s.sol";
 import {CreateSubscription, FundSubscription, AddConsumer} from "script/Interactions.s.sol";
@@ -11,6 +11,7 @@ contract DeployScript is Script {
     address public userAccount;
 
     function run() external {
+        console.log("chain is ", block.chainid);
         deployContract();
     }
 

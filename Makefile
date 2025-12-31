@@ -11,10 +11,13 @@ compile:
 	forge compile
 test:
 	forge test
-fund subscription:
+fund-subscription:
 	forge script script/Interactions.s.sol:FundSubscription --rpc-url $(SEPOLIA_RPC_URL) --private-key $(SEPOLIA_PRIVATE_KEY) --broadcast
-create subscription:
+create-subscription:
 	forge script script/Interactions.s.sol:CreateSubscription --rpc-url $(SEPOLIA_RPC_URL) --private-key $(SEPOLIA_PRIVATE_KEY) --broadcast -vvv
 
-subscription directly:
+subscription-directly:
 	forge script script/Interactions.s.sol:CreateSubscriptionDirectly --rpc-url $(SEPOLIA_RPC_URL) --private-key $(SEPOLIA_PRIVATE_KEY) --broadcast -vvvv
+
+deploy-sepolia:
+	forge script script/DeployScript.s.sol:DeployScript --rpc-url $(SEPOLIA_RPC_URL) --private-key $(SEPOLIA_PRIVATE_KEY) --broadcast -vvvv
