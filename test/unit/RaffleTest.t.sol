@@ -6,12 +6,14 @@ import {Raffle} from "../../src/Raffle.sol";
 import {DeployScript} from "script/DeployScript.s.sol";
 import {HelperConfig} from "script/HelperConfig.s.sol";
 import {Vm} from "forge-std/Vm.sol";
+import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
 contract RaffleTest is Test {
     Raffle public raffle;
     HelperConfig public helperConfig;
     uint256 public entranceFee;
     uint256 public interval;
+    address public vrfCoordinator;
     address PLAYER = makeAddr("player");
     uint256 public constant STARTING_PLAYER_BALANCE = 10 ether;
 
@@ -26,6 +28,7 @@ contract RaffleTest is Test {
         HelperConfig.NetworkConfig memory config = helperConfig.getConfig();
         entranceFee = config.entranceFee;
         interval = config.interval;
+        vrfCoordinator = config.vrfCoordinator;
         vm.deal(PLAYER, STARTING_PLAYER_BALANCE);
     }
 
@@ -191,5 +194,22 @@ contract RaffleTest is Test {
         //Assert
         assert(requestId > 0);
         assert(uint256(raffle.getRaffleState()) == 1);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                              Fullfill Random Words
+    //////////////////////////////////////////////////////////////*/
+    function testCallFullFillRandomWordsOnlyAfterPerformUpKeepPasses(
+        uint256 _requestId
+    ) public {
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        vm.expectRevert(VRFCoordinatorV2_5Mock.InvalidRequest.selector);
+        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(
+            _requestId,
+            address(raffle)
+        );
     }
 }
