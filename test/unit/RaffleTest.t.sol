@@ -102,12 +102,16 @@ contract RaffleTest is Test {
         assert(!upKeepNeeded);
     }
 
-    function testCheckUpKeepNeededFailesOPENState() public {
-        //Arrange
+    modifier raffleEntered() {
         vm.prank(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
         vm.warp(block.timestamp + interval + 1);
         vm.roll(block.number + 1);
+        _;
+    }
+
+    function testCheckUpKeepNeededFailesOPENState() public raffleEntered {
+        //Arrange
         raffle.performUpkeep("");
         //Act
         (bool upKeepNeeded, ) = raffle.checkUpkeep("");
@@ -124,12 +128,7 @@ contract RaffleTest is Test {
         assert(!checkUpKeep);
     }
 
-    function testCheckUpKeepNeededIsPassed() public {
-        //Arrange
-        vm.prank(PLAYER);
-        raffle.enterRaffle{value: entranceFee}();
-        vm.warp(block.timestamp + interval + 1);
-        vm.roll(block.number + 1);
+    function testCheckUpKeepNeededIsPassed() public raffleEntered {
         //Act
         (bool checkUpKeepNeeded, ) = raffle.checkUpkeep("");
         //Assert
@@ -166,12 +165,8 @@ contract RaffleTest is Test {
         raffle.performUpkeep("");
     }
 
-    function testPerformUpKeepStateAndEmitRequestID() public {
+    function testPerformUpKeepStateAndEmitRequestID() public raffleEntered {
         //Arrange
-        vm.prank(PLAYER);
-        raffle.enterRaffle{value: entranceFee}();
-        vm.warp(block.timestamp + interval + 1);
-        vm.roll(block.number + 1);
         // raffle.performUpkeep("");
         //Act
         vm.recordLogs();
@@ -211,5 +206,46 @@ contract RaffleTest is Test {
             _requestId,
             address(raffle)
         );
+    }
+
+    function testFullfillRandomWordsPickWinnerAndValidate()
+        public
+        raffleEntered
+    {
+        //Arrange
+        uint256 morePlayers = 3;
+        uint256 startingIndex = 1;
+        address expectedWinner = address(1);
+
+        for (uint256 i = startingIndex; i < morePlayers + startingIndex; i++) {
+            address newPlayer = address(uint160(i));
+            // address newPlayer = vm.addr(i);
+            hoax(newPlayer, 1 ether);
+            raffle.enterRaffle{value: entranceFee}();
+        }
+        uint256 startingTimeStamp = raffle.getLastTimeStamp();
+        uint256 startingBalance = expectedWinner.balance;
+        uint256 raffleWinningAmount = entranceFee * (morePlayers + 1);
+        //Act
+        //get event logs
+        vm.recordLogs();
+        raffle.performUpkeep("");
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 requestId = entries[1].topics[1];
+        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(
+            uint256(requestId),
+            address(raffle)
+        );
+
+        //Assert
+        uint256 winnersBalance = raffle.getRecentWinner().balance;
+        console.log(raffle.getRecentWinner());
+        Raffle.RaffleState rState = raffle.getRaffleState();
+        uint256 endingTimeStamp = raffle.getLastTimeStamp();
+        assert(uint256(rState) == 0);
+        assert(winnersBalance > 0);
+        assert(winnersBalance == startingBalance + raffleWinningAmount);
+        // console.log("winning maount ", winnersBalance);
+        assert(endingTimeStamp > startingTimeStamp);
     }
 }

@@ -8,7 +8,7 @@ import {LinkToken} from "test/mocks/LinkToken.sol";
 
 abstract contract CodeConstants {
     /*MOCK constants*/
-    uint96 public constant MOCK_BASE_FEE = 0.02 ether;
+    uint96 public constant MOCK_BASE_FEE = 10 ether; //0.02 ether;
     uint96 public constant MOCK_GAS_PRICE = 1e18;
     int256 public constant MOCK_WEI_PER_LINK = 4e15;
 
